@@ -1,24 +1,49 @@
+# Detect run mode ---------------------------------------------------------
+xena.runMode <- getOption("xena.runMode", default = "client")
+message("Run mode:", xena.runMode)
+
 # Load necessary packages ----------------------------------
-require(purrr)
-require(tidyr)
-require(stringr)
-require(magrittr)
-require(dplyr)
-require(ggplot2)
-require(ggpubr)
-require(plotly)
-require(UCSCXenaTools)
-require(UCSCXenaShiny)
-require(shiny)
-require(shinyBS)
-require(shinyjs)
-require(shinyWidgets)
-require(survival)
-require(survminer)
-require(shinyalert)
-require(shinyFiles)
-require(ezcox)
-require(purrr)
+message("Checking depedencies...")
+
+library(pacman)
+if (!requireNamespace("gganatogram")) {
+  pacman::p_load(remotes)
+  tryCatch(
+    remotes::install_github("jespermaag/gganatogram"),
+    error = function(e) {
+      remotes::install_git("https://gitee.com/XenaShiny/gganatogram")
+    }
+  )
+}
+
+pacman::p_load(
+    purrr,
+    tidyr,
+    stringr,
+    magrittr,
+    dplyr,
+    ggplot2,
+    ggpubr,
+    plotly,
+    UCSCXenaTools,
+    UCSCXenaShiny,
+    shiny,
+    shinyBS,
+    shinyjs,
+    shinyWidgets,
+    shinyalert,
+    shinyFiles,
+    survival,
+    survminer,
+    ezcox,
+    waiter,
+    colourpicker,
+    DT,
+    fs,
+    gganatogram
+)
+
+message("Starting...")
 
 # Put data here -----------------------------------------------------------
 data("XenaData", package = "UCSCXenaTools", envir = environment())
@@ -42,10 +67,7 @@ Xena_summary <- dplyr::group_by(xena_table, Hub) %>%
     n_dataset = length(unique(.data$`Dataset ID`)), .groups = "drop")
 
 # global color
-mycolor <- c(RColorBrewer::brewer.pal(12, "Set3"))
-# need at least 140 colors for summary plot
-#mycolor <- rep(mycolor, 15)
-
+mycolor <- c(RColorBrewer::brewer.pal(12, "Paired"))
 
 # Put modules here --------------------------------------------------------
 modules_path <- system.file("shinyapp", "modules", package = "UCSCXenaShiny", mustWork = TRUE)
@@ -73,6 +95,7 @@ server_file <- function(x) {
 ui <- tagList(
   tags$head(tags$title("XenaShiny")),
   shinyjs::useShinyjs(),
+  use_waiter(),
   navbarPage(
     title = div(
       img(src = "xena_shiny-logo_white.png", height = 49.6, style = "margin:-20px -15px -15px -15px")

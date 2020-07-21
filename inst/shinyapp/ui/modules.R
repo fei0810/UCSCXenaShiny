@@ -10,10 +10,16 @@ ui.page_modules <- function() {
       ui.modules_pancan_dist("module_gene_pancan_dist")
     ),
     tabPanel(
-      "Gene Expression Cox Analysis"      
+      "Gene Pan-cancer Expression Anatomy",
+      ui.modules_pancan_anatomy("modules_pancan_anatomy")
     ),
     tabPanel(
-      "Gene Expression vs Immune Correlation Analysis"
+      "Gene Expression Cox Analysis",
+      ui.modules_pancan_unicox("modules_pancan_unicox")
+    ),
+    tabPanel(
+      "Gene Expression vs Immune Correlation Analysis",
+      ui.modules_pancan_immune("modules_pancan_immune")
     ),
     tabPanel(
       "Survival Analysis",
