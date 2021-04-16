@@ -5,48 +5,74 @@ status](https://www.r-pkg.org/badges/version/UCSCXenaShiny)](https://cran.r-proj
 [![](http://cranlogs.r-pkg.org/badges/grand-total/UCSCXenaShiny?color=orange)](https://cran.r-project.org/package=UCSCXenaShiny)
 [![lifecycle](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
 ![R-CMD-check](https://github.com/openbiox/UCSCXenaShiny/workflows/R-CMD-check/badge.svg)
+[![Lines Of
+Code](https://tokei.rs/b1/github/openbiox/UCSCXenaShiny?category=code)](https://github.com/openbiox/UCSCXenaShiny)
 
-The goal of **UCSCXenaShiny** is to provide a web app for downloading,
+**UCSCXenaShiny** is an R package for interactively exploring UCSC Xena.
+It is mainly designed to provide a web app (built on the top of [`{shiny}`](https://shiny.rstudio.com/) framework and [`{UCSCXenaTools}`](https://github.com/ropensci/UCSCXenaTools/) package) for downloading,
 analyzing and visualizing datasets from [UCSC
-Xena](https://xenabrowser.net/datapages/), which is a collection of
-UCSC-hosted public databases such as TCGA, ICGC, TARGET, GTEx, CCLE, and
-others. Databases are normalized so they can be combined, linked,
-filtered, explored and downloaded.
+Xena](https://xenabrowser.net/datapages/).
 
-Please cite the following article when using `UCSCXenaShiny`:
+Please cite the following article when you used **UCSCXenaShiny** in your study:
+
+---------------
 
 Wang, S.; Xiong, Y.; Gu, K.; Zhao, L.; Li, Y.; Zhao, F.; Li, X.; Liu, X. UCSCXenaShiny: An R Package for Exploring and Analyzing UCSC Xena Public Datasets in Web Browser. Preprints 2020, 2020070179 (doi: 10.20944/preprints202007.0179.v1).
 
-## :arrow\_double\_down: Installation
+---------------
+
+## :cloud: Use on cloud
+
+If you don't want to install R and packages locally, or you have no programming experience, try using this tool on Hiplot platform: <https://shiny.hiplot.com.cn/ucsc-xena-shiny/>.
+
+## :arrow_double_down: Installation
 
 You can install stable release of **UCSCXenaShiny** from CRAN with:
 
-``` r
+```r
 install.packages("UCSCXenaShiny")
 ```
 
 You can install the development version of **UCSCXenaShiny** from Github
 with:
 
-``` r
+```r
 remotes::install_github("openbiox/XenaShiny")
+```
+
+Or Gitee (for Chinese users):
+
+```r
+remotes::install_git("https://gitee.com/XenaShiny/UCSCXenaShiny")
 ```
 
 ## :beginner: Usage
 
 First load package:
 
-``` r
+```r
 library(UCSCXenaShiny)
 ```
 
-Then run the following command in console:
+Start Shiny in your R console (ignore this if you just want to use functions in this package):
 
-``` r
+```r
 app_run()
+# At default, the Shiny is running under client mode
+# It means the data queried from remote UCSC Xena server will
+# be saved to temporary directory determined by R
+# If you frequently use this tool or deploy this tool as a web service for multiple users
+# It is recommended to run it with 'server' mode
+# i.e.,
+#
+# app_run("server")
 ```
 
-## :writing\_hand: Author
+For advanced users, examples for illustrating useful functions to obtain and analyze data are described in vignette.
+
+All exported data and functions are organized at [here](https://openbiox.github.io/UCSCXenaShiny/reference/index.html).
+
+## :writing_hand: Author
 
   - [Shixiang Wang](https://github.com/ShixiangWang)
   - [Yi Xiong](https://github.com/Byronxy)
@@ -55,6 +81,6 @@ app_run()
   - [Yin Li](https://github.com/yinlisssss)
   - [Fei Zhao](https://github.com/fei0810)
 
-## :page\_with\_curl: LICENSE
+## :page_with_curl: LICENSE
 
 MIT © [Openbiox](https://github.com/openbiox)

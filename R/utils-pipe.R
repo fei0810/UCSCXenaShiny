@@ -1,4 +1,4 @@
-#' Pipe operator
+#' Pipe Operator
 #'
 #' See \code{magrittr::\link[magrittr]{\%>\%}} for details.
 #'
@@ -10,9 +10,9 @@
 #' @usage lhs \%>\% rhs
 NULL
 
-`%:::%` <- function(pkg, fun) {
+`%:::%` <- function(pkg, fun, inherits = TRUE) {
   get(fun,
     envir = asNamespace(pkg),
-    inherits = FALSE
+    inherits = inherits
   )
 }

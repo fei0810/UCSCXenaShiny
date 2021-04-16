@@ -2,18 +2,22 @@
 % Please edit documentation in R/vis_pancan_value.R
 \name{vis_pancan_anatomy}
 \alias{vis_pancan_anatomy}
-\title{Visualize single gene expression in anatomy location}
+\title{Visualize Single Gene Expression in Anatomy Location}
 \usage{
-vis_pancan_anatomy(Gene = "TP53", Gender = c("Female", "Male"))
+vis_pancan_anatomy(Gene = "TP53", Gender = c("Female", "Male"), option = "D")
 }
 \arguments{
 \item{Gene}{Gene symbal for comparision}
 
 \item{Gender}{a string, "Female" (default) or "Male".}
+
+\item{option}{A character string indicating the colormap option to use. Four
+options are available: "magma" (or "A"), "inferno" (or "B"), "plasma" (or "C"),
+"viridis" (or "D", the default option) and "cividis" (or "E").}
 }
 \value{
 a \code{ggplot} object
 }
 \description{
-Visualize single gene expression in anatomy location
+Visualize Single Gene Expression in Anatomy Location
 }

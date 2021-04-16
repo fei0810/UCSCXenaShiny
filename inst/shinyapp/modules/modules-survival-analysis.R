@@ -1,10 +1,3 @@
-dataset <- dplyr::filter(XenaData, XenaHostNames == "tcgaHub") %>%
-  dplyr::select("XenaCohorts") %>% 
-  unique() %>%
-  dplyr::mutate(id = stringr::str_match(XenaCohorts, "\\((\\w+?)\\)")[,2],
-                des = stringr::str_match(XenaCohorts, "(.*)\\s+\\(")[,2]) %>%
-  dplyr::arrange(id)
-
 ui.modules_sur_plot <- function(id) {
   ns <- NS(id)
 
@@ -14,49 +7,77 @@ ui.modules_sur_plot <- function(id) {
       column(3, wellPanel(
         selectInput(
           inputId = ns("dataset"), label = "Choose a dataset:",
-          choices = dataset$id
+          choices = setdiff(TCGA_datasets$id, "FPPP")
         ),
-        
+
         shinyWidgets::prettyRadioButtons(
-          inputId = ns("profiles"), label = "Select a genomic profiles:",
-          choiceValues = c("mRNA", "mutation", "cnv", "protein"),
-          choiceNames = c("mRNA Expression", "Mutations", "Copy-number alterations from GISTIC", "Protein Expression"),
+          inputId = ns("profile"), label = "Select a genomic profile:",
+          choiceValues = c("mRNA", "transcript", "miRNA", "mutation", "cnv", "methylation", "protein"),
+          choiceNames = c("mRNA Expression", "Transcript Expression", "miRNA Expression", "Mutations", "Copy Number Variation", "DNA Methylation", "Protein Expression"),
           animation = "jelly"
         ),
-        
-        shinyWidgets::searchInput(
-          inputId = ns("gene_input"),
-          label = "Gene",
-          value = NULL,
-          placeholder = "KDM1A",
-          btnSearch = icon("search"),
-          btnReset = icon("remove"),
-          width = "100%"
+        shinyBS::bsPopover(ns("item_input"),
+          title = "Tips",
+          content = "e.g., Gene symbol: TP53; transcript: ENST00000000233; miRNA ID: hsa-miR-128-3p;",
+          placement = "right", options = list(container = "body")
         ),
-        
+        shinyjs::hidden(
+          # shinyWidgets::searchInput(
+          shinyWidgets::textInputAddon(
+            inputId = ns("item_input"),
+            label = "Item:",
+            value = NULL,
+            placeholder = "",
+            addon = icon("dna"),
+            # btnSearch = icon("search"),
+            # btnReset = icon("remove"),
+            width = "100%"
+          )
+        ),
+        shinyjs::hidden(
+          shinyWidgets::pickerInput(
+            inputId = ns("protein_input"),
+            label = "Protein",
+            choices = UCSCXenaShiny:::.all_pancan_proteins,
+            selected = NULL,
+            options = list(
+              `live-search` = TRUE,
+              style = "btn-light"
+            )
+          )
+        ),
+        shinyWidgets::actionBttn(
+          inputId = ns("submit_bt"), label = "Submit",
+          style = "gradient",
+          icon = icon("check"),
+          color = "default",
+          block = TRUE,
+          size = "sm"
+        ),
+        br(),
         shinyjs::hidden(
           tags$div(
             id = ns("progress"),
             shinyWidgets::progressBar(
-              id = ns("progressbar"), value = 50
+              id = ns("progressbar"), value = 70
             )
           )
         ),
         htmlOutput(ns("pre_re")),
-        
+        hr(),
         h4("NOTEs:"),
         h5("1. Not all dataset have clinical/pathological stages, so, in this case, the stage option is disabled."),
         h5("2. The default option <Auto> will return the best p value, if you do not want to do so please choose <Custom>."),
-        tags$a(href = "https://tcga.xenahubs.net", "Data source from TCGA hub")
+        tags$a(href = "https://pancanatlas.xenahubs.net", "Data source from Pan-Cancer Atlas Hub")
       )),
-      
+
       shinyjs::hidden(
         column(3, id = ns("parameter"), wellPanel(
           sliderInput(
             inputId = ns("age"), label = "Age",
             min = 0, max = 100, value = c(0, 100)
           ),
-          
+
           shinyWidgets::prettyCheckboxGroup(
             inputId = ns("sex"), label = "Sex",
             choices = c("Female" = "FEMALE", "Male" = "MALE", "Unknown" = "Unknown"),
@@ -65,7 +86,7 @@ ui.modules_sur_plot <- function(id) {
             status = "primary",
             animation = "jelly"
           ),
-          
+
           shinyWidgets::prettyCheckboxGroup(
             inputId = ns("stage"), label = "Clinical/Pathological stage",
             choices = c("I", "II", "III", "IV", "Unknown"),
@@ -74,27 +95,57 @@ ui.modules_sur_plot <- function(id) {
             status = "primary",
             animation = "jelly"
           ),
-          
+
           shinyWidgets::prettyRadioButtons(
-            inputId = ns("cut_off_mode"),
-            label = "Cut off mode",
-            choices = c("Auto", "Custom"),
+            inputId = ns("endpoint"),
+            label = "Primary endpoint",
+            choices = c("OS", "DSS", "DFI", "PFI"),
             inline = TRUE,
             icon = icon("check"),
             animation = "jelly"
           ),
-          
+
           conditionalPanel(
-            condition = "input.cut_off_mode == 'Custom'", ns = ns,
-            sliderInput(
-              inputId = ns("cutpoint"), label = "Cut off (%)",
-              min = 25, max = 75, value = c(50, 50)
+            condition = "input.profile == 'mRNA' | input.profile == 'protein' | input.profile == 'miRNA' | input.profile == 'methylation' | input.profile == 'transcript'",
+            ns = ns,
+            shinyWidgets::prettyRadioButtons(
+              inputId = ns("cutoff_mode"),
+              label = "Cutoff mode",
+              choices = c("Auto", "Custom"),
+              inline = TRUE,
+              icon = icon("check"),
+              animation = "jelly"
             ),
-            textOutput(ns("cutoff1")),
-            textOutput(ns("cutoff2")),
-            hr()
+            conditionalPanel(
+              condition = "input.cutoff_mode == 'Custom'", ns = ns,
+              sliderInput(
+                inputId = ns("cutpoint"), label = "Cutoff (%)",
+                min = 25, max = 75, value = c(50, 50)
+              ),
+              textOutput(ns("cutoff1")),
+              textOutput(ns("cutoff2")),
+              hr()
+            )
           ),
-          
+
+          conditionalPanel(
+            condition = "input.profile == 'mutation'", ns = ns,
+            tags$p("Note: In TCGA somatic mutation (SNP and INDEL) dataset, mutation type is represented by 1 and wild type is 0.")
+          ),
+
+          conditionalPanel(
+            condition = "input.profile == 'cnv'", ns = ns,
+            awesomeCheckboxGroup(
+              inputId = ns("cs_cnv"),
+              label = "Select CNV type.",
+              choices = c("Normal", "Duplicated", "Deleted"),
+              selected = c("Normal", "Duplicated", "Deleted"),
+              # status = "danger",
+              width = "120%",
+              inline = TRUE
+            )
+          ),
+
           shinyWidgets::actionBttn(
             inputId = ns("go"), label = " GO!",
             style = "gradient",
@@ -103,8 +154,9 @@ ui.modules_sur_plot <- function(id) {
             block = TRUE,
             size = "sm"
           ),
-          
-          tags$hr(),
+          tags$br(),
+          numericInput(inputId = ns("height"), label = "Height", value = 25),
+          numericInput(inputId = ns("width"), label = "Width", value = 20),
           column(
             width = 12, align = "center",
             prettyRadioButtons(
@@ -118,7 +170,7 @@ ui.modules_sur_plot <- function(id) {
               fill = TRUE
             )
           ),
-          
+
           downloadBttn(
             outputId = ns("download"),
             # label = "Download Plot",
@@ -129,10 +181,11 @@ ui.modules_sur_plot <- function(id) {
           )
         ))
       ),
-      
+
       column(
         6,
-        plotOutput(ns("surplot"))
+        verbatimTextOutput(ns("plot_text")),
+        plotOutput(ns("surplot"), height = "600px")
       )
     )
   )
@@ -140,18 +193,17 @@ ui.modules_sur_plot <- function(id) {
 
 server.modules_sur_plot <- function(input, output, session) {
   ns <- session$ns
-  # options(shiny.sanitize.errors = TRUE)
-  observeEvent(input$gene_input_search, {
-    if (input$gene_input == "") {
-      sendSweetAlert(
-        session = session,
-        title = "Error...",
-        text = "Please add a gene.",
-        type = "error"
-      )
+  # Global monitoring
+  observe({
+    if (input$profile == "protein") {
+      shinyjs::hide(id = "item_input")
+      shinyjs::show(id = "protein_input")
+    } else {
+      shinyjs::show(id = "item_input")
+      shinyjs::hide(id = "protein_input")
     }
   })
-  
+
   observe({
     if (is.null(input$sex) | is.null(input$stage)) {
       sendSweetAlert(
@@ -162,170 +214,166 @@ server.modules_sur_plot <- function(input, output, session) {
       )
     }
   })
-  
-  sur_dat_pre <- eventReactive(input$gene_input_search, {
-    req(input$gene_input)
-    tryCatch(sur_get(input$dataset, input$gene_input), error = function(e){NULL})
-  })
-  
-  observeEvent(input$gene_input_search, {
-    shinyjs::show("progress")
-    if (!is.null(sur_dat_pre())) {
-      updateProgressBar(session = session, id = ns("progressbar"), value = 100)
-      shinyjs::hide("progress")
-      shinyjs::show("parameter")
+  observe({
+    if (!is.null(filter_dat())) {
+      if (nrow(filter_dat()) < 10) {
+        sendSweetAlert(
+          session = session,
+          title = "Error...",
+          text = "Data is too little to analysis (<10).",
+          type = "error"
+        )
+      }
     }
   })
-  
-  filter_dat <- eventReactive(input$go, {
-    # req(input$age,input$sex,input$stage)
-    dat_filter(
-      data = sur_dat_pre(), age = input$age,
-      gender = input$sex, stage = input$stage
-    )
-  })
-  
-  output$cutoff1 <- renderText({
-    paste("Cutoff-Low(%) :", "0 -", input$cutpoint[1])
-  })
-  output$cutoff2 <- renderText({
-    paste("Cutoff-High(%): ", input$cutpoint[2], "- 100")
-  })
-  
-  output$pre_re <- renderText({
-    if (is.null(sur_dat_pre())) {
-      return(paste(p("Can't find this gene in dataset.", style="color:red")))
-    }else if (nrow(sur_dat_pre()) > 0){
-      return(paste(p("Ok.", style = "color:green")))
-    }else{
-      return(paste(p("Failure.", style="color:red")))
-    }
-  })
-  
-  plot_func <- reactive({
-    if (nrow(filter_dat()) >= 10) {
-      p <- sur_plot(filter_dat(), input$cut_off_mode, input$cutpoint)
-      return(p)
-    }
-  })
-  
-  # Show waiter for surplot
-  w <- waiter::Waiter$new(id = ns("surplot"), html = waiter::spin_hexdots(), color = "white")
-  
-  output$surplot <- renderPlot({
-    if (nrow(filter_dat()) < 10) {
+
+  # Action monitoring
+  observeEvent(input$submit_bt, {
+    if (input$profile == "gene" & input$item_input == "") {
       sendSweetAlert(
         session = session,
         title = "Error...",
-        text = "Data is too little to analysis (<10).",
+        text = "Please add a gene.",
         type = "error"
       )
-      NULL
-    } else {
-      w$show() # Waiter add-ins
-      plot_func()
     }
   })
-  
+
+  observeEvent(input$submit_bt, {
+    shinyjs::show("progress")
+    if (!is.null(sur_dat_pre())) {
+      # updateProgressBar(session = session, id = ns("progressbar"), value = 70)
+      shinyjs::show("parameter")
+    }
+    shinyjs::hide("progress")
+  })
+
+  # block
+  sur_dat_pre <- eventReactive(input$submit_bt, {
+    if (input$profile == "protein") {
+      tcga_surv_get(
+        TCGA_cohort = input$dataset, item = input$protein_input,
+        profile = input$profile, TCGA_cli_data = TCGA_cli_merged
+      )
+    } else {
+      tcga_surv_get(
+        TCGA_cohort = input$dataset, item = input$item_input,
+        profile = input$profile, TCGA_cli_data = TCGA_cli_merged
+      )
+    }
+  }, )
+
+  filter_dat <- eventReactive(input$go, {
+    # req(input$age,input$sex,input$stage)
+    if (is.null(sur_dat_pre())) {
+      return(NULL)
+    }
+    dat_filter(
+      data = sur_dat_pre(), age = input$age,
+      gender = input$sex, stage = input$stage,
+      endpoint = input$endpoint
+    )
+  })
+  plot_text <- eventReactive(input$go, {
+    if (input$profile == "protein") {
+      item_show <- input$protein_input
+    } else {
+      item_show <- input$item_input
+    }
+    paste(
+      paste("Dataset :", input$dataset),
+      paste("Profile :", input$profile),
+      paste("Item :", item_show),
+      paste("Number of cases :", nrow(filter_dat())),
+      sep = "\n"
+    )
+  })
+
+  plot_func <- eventReactive(input$go, {
+    if (!is.null(filter_dat())) {
+      if (nrow(filter_dat()) >= 10) {
+        p <- tcga_surv_plot(filter_dat(), 
+                            cutoff_mode = input$cutoff_mode,
+                            cutpoint = input$cutpoint,
+                            cnv_type = input$cs_cnv,
+                            profile = input$profile)
+        if (is.null(p)) {
+          sendSweetAlert(
+            session = session,
+            title = "Error...",
+            text = "Something wrong, maybe only one genotype for this gene or bad input item.",
+            type = "error"
+          )
+        }
+        return(p)
+      } else {
+        return(NULL)
+      }
+    } else {
+      return(NULL)
+    }
+  })
+
+  # output
+  w <- waiter::Waiter$new(
+    id = ns("surplot"), # Show waiter for surplot
+    html = waiter::spin_hexdots(),
+    color = "white"
+  )
+
+  output$pre_re <- renderText({
+    if (is.null(sur_dat_pre())) {
+      return(paste(p("Failure. The possible reason is that the gene cannot be found.", style = "color:red")))
+    } else {
+      return(paste(p("Next step.", style = "color:green")))
+    }
+  })
+
+  output$cutoff1 <- renderText({
+    paste("Cutoff-Low(%) :", "0 -", input$cutpoint[1])
+  })
+
+  output$cutoff2 <- renderText({
+    paste("Cutoff-High(%): ", input$cutpoint[2], "- 100")
+  })
+
+  output$plot_text <- renderText(plot_text())
+
+  output$surplot <- renderPlot({
+    w$show() # Waiter add-ins
+    plot_func()
+  })
+
   output$download <- downloadHandler(
-    filename = function(){
-      paste0("surplot.", input$device)
+    filename = function() {
+      paste0(Sys.Date(), "_tcga_surplot.", input$device)
     },
     content = function(file) {
       p <- plot_func()
-      ggplot2::ggsave(filename = file, plot = print(p), device = input$device, 
-                      units = "cm", width = 20, height = 15, dpi = 600)
+      ggplot2::ggsave(
+        filename = file, plot = print(p, newpage = F), device = input$device,
+        units = "cm",  width = input$width, height = input$height, dpi = 600
+      )
     }
   )
-}
-## Retrieve and pre-download file
-sur_get <- function(TCGA_cohort, gene) {
-  luad_cohort <- XenaData %>%
-    filter(XenaHostNames == "tcgaHub") %>%
-    .[grep(TCGA_cohort, .$XenaCohorts), ]
-  
-  data("tcga_clinicalMatrix", package = "UCSCXenaShiny", envir = environment())
-  cliMat <- dplyr::filter(cliMat, type == TCGA_cohort) %>%
-    dplyr::rename(pathologic_stage = ajcc_pathologic_tumor_stage)
-  
-  if (!("pathologic_stage") %in% names(cliMat)) {
-    cli$pathologic_stage <- NA
-  }
-  
-  gx <- luad_cohort %>%
-    dplyr::filter(DataSubtype == "gene expression RNAseq") %>%
-    {
-      if ("IlluminaHiSeq" %in% .$Label) {
-        dplyr::filter(., Label == "IlluminaHiSeq")
-      } else {
-        dplyr::filter(., Label == "IlluminaHiSeq pancan normalized")
-      }
-    }
-  
-  gd <- get_pancan_gene_value(gene)$expression
-  gd <- gd[nchar(names(gd)) == 15]
-  
-  merged_data <- tibble(
-    sampleID = names(gd),
-    gene_expression = as.numeric(gd),
-    patid = substr(sampleID, 1, 12)
-  ) %>%
-    dplyr::filter(as.numeric(substr(sampleID, 14, 15)) < 10) %>% 
-    dplyr::left_join(cliMat, by = c("patid" = "bcr_patient_barcode")) %>% 
-    dplyr::filter(!is.na(OS),
-                  !is.na(OS.time)) %>%
-    dplyr::select(sampleID, gene_expression,
-                  time = OS.time, status = OS,
-                  gender, age = age_at_initial_pathologic_diagnosis,
-                  stage = pathologic_stage
-    ) %>%
-    # dplyr::mutate(stage = gsub("[(Stage)ABC ]*", "", stage)) %>%
-    dplyr::mutate(stage = stringr::str_match(stage, "Stage\\s+(.*?)[ABC]?$")[,2]) %>%
-    dplyr::mutate(
-      stage = ifelse(is.na(stage), "Unknown", stage),
-      gender = ifelse(is.na(gender), "Unknown", gender)
-    )
-  return(merged_data)
 }
 
+
+# Functions ---------------------------------------------------------------
+
 ## Data filter
-dat_filter <- function(data, age, gender, stage) {
-  dat <- data %>% dplyr::filter(
-    age > !!age[1],
-    age < !!age[2],
-    gender %in% !!gender,
-    stage %in% !!stage
-  )
+dat_filter <- function(data, age, gender, stage, endpoint) {
+  endpoint.time <- paste0(endpoint, ".time")
+  dat <- data %>%
+    dplyr::rename(time = !!endpoint.time, status = !!endpoint) %>%
+    dplyr::filter(
+      age > !!age[1],
+      age < !!age[2],
+      gender %in% !!gender,
+      stage %in% !!stage,
+      !is.na(time),
+      !is.na(status)
+    )
   return(dat)
 }
 
-## Survaival analysis
-sur_plot <- function(data, cut_off_mode, cutpoint) {
-  data %<>% dplyr::arrange(gene_expression) %>%
-    dplyr::mutate(per_rank = 100 / nrow(.) * (1:nrow(.)))
-  if (cut_off_mode == "Auto") {
-    nd <- nrow(data)
-    nr <- which(data$per_rank > 25 & data$per_rank < 75)
-    p <- c()
-    for (i in nr) {
-      dat <- data %>% mutate(group = c(rep("Low level", i), rep("High level", nd - i)))
-      sdf <- survdiff(Surv(time, status) ~ group, data = dat)
-      p.val <- 1 - pchisq(sdf$chisq, length(sdf$n) - 1)
-      p <- c(p, p.val)
-    }
-    nr <- nr[which.min(p)]
-    data %<>% mutate(group = c(rep("Low level", nr), rep("High level", nd - nr)))
-  } else {
-    data %<>% mutate(group = case_when(
-      per_rank > !!cutpoint[2] ~ "High level",
-      per_rank < !!cutpoint[1] ~ "Low level",
-      TRUE ~ NA_character_
-    ))
-  }
-  fit <- survfit(Surv(time, status) ~ group, data = data)
-  ggsurvplot(fit,
-    data = data, pval = TRUE, pval.method = TRUE,
-    risk.table = TRUE,
-    xlab = "Duration overall survival (days)",
-  )
-}

@@ -4,18 +4,24 @@
 \alias{get_ccle_cn_value}
 \alias{get_ccle_gene_value}
 \alias{get_ccle_protein_value}
+\alias{get_ccle_mutation_status}
 \alias{get_pancan_value}
 \alias{get_pancan_gene_value}
+\alias{get_pancan_transcript_value}
 \alias{get_pancan_protein_value}
 \alias{get_pancan_mutation_status}
 \alias{get_pancan_cn_value}
-\title{Fetch identifier value from pan-cancer dataset}
+\alias{get_pancan_methylation_value}
+\alias{get_pancan_miRNA_value}
+\title{Fetch Identifier Value from Pan-cancer Dataset}
 \usage{
 get_ccle_cn_value(identifier)
 
 get_ccle_gene_value(identifier)
 
 get_ccle_protein_value(identifier)
+
+get_ccle_mutation_status(identifier)
 
 get_pancan_value(
   identifier,
@@ -27,11 +33,17 @@ get_pancan_value(
 
 get_pancan_gene_value(identifier)
 
+get_pancan_transcript_value(identifier)
+
 get_pancan_protein_value(identifier)
 
 get_pancan_mutation_status(identifier)
 
 get_pancan_cn_value(identifier)
+
+get_pancan_methylation_value(identifier, type = c("450K", "27K"))
+
+get_pancan_miRNA_value(identifier)
 }
 \arguments{
 \item{identifier}{a length-1 character representing a gene symbol, ensembl gene id, or probe id.
@@ -43,9 +55,11 @@ Gene symbol is highly recommended.}
 \item{dataset}{a length-1 chracter representing a regular expression for matching
 \code{XenaDatasets} of \link[UCSCXenaTools:XenaData]{UCSCXenaTools::XenaData}.}
 
-\item{host}{a length-1 character representing host name, e.g. "toilHub".}
+\item{host}{a character vector representing host name(s), e.g. "toilHub".}
 
 \item{samples}{a character vector representing samples want to be returned.}
+
+\item{type}{methylation type, one of "450K" and "27K".}
 }
 \value{
 a named vector or \code{list}
@@ -61,15 +75,23 @@ Identifier includes gene/probe etc.
 
 \item \code{get_ccle_protein_value}: Fetch gene protein expression value from CCLE dataset
 
+\item \code{get_ccle_mutation_status}: Fetch gene mutation info from CCLE dataset
+
 \item \code{get_pancan_value}: Fetch identifier value from pan-cancer dataset
 
 \item \code{get_pancan_gene_value}: Fetch gene expression value from pan-cancer dataset
+
+\item \code{get_pancan_transcript_value}: Fetch gene transcript expression value from pan-cancer dataset
 
 \item \code{get_pancan_protein_value}: Fetch protein expression value from pan-cancer dataset
 
 \item \code{get_pancan_mutation_status}: Fetch mutation status value from pan-cancer dataset
 
 \item \code{get_pancan_cn_value}: Fetch gene copy number value from pan-cancer dataset processed by GISTIC 2.0
+
+\item \code{get_pancan_methylation_value}: Fetch gene expression value from CCLE dataset
+
+\item \code{get_pancan_miRNA_value}: Fetch miRNA expression value from pan-cancer dataset
 }}
 
 \examples{

@@ -4,6 +4,9 @@ utils::globalVariables(
   c(
     "XenaHostNames",
     "DataSubtype",
-    "XenaDatasets"
+    "XenaDatasets",
+    ".",
+    "Type",
+    "group"
   )
 )
