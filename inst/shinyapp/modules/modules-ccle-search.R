@@ -1,27 +1,47 @@
-ccle_choices <- c(
-  "Gender", "Site_Primary", "Histology", "Hist_Subtype1", "Source", "Expression_arrays", "SNP_arrays", "Hybrid_Capture_Sequencing", "Type"
-)
-
 ui.modules_ccle_dist <- function(id) {
   ns <- NS(id)
   fluidPage(
-    titlePanel("Module: Gene CCLE Expression Distribution"),
     sidebarLayout(
       sidebarPanel = sidebarPanel(
-        shinyWidgets::searchInput(
-          inputId = ns("ccle_search"),
-          label = NULL,
-          btnSearch = icon("search"),
-          btnReset = icon("remove"),
-          # placeholder = "Enter a gene symbol, e.g. TP53",
-          width = "100%"
+        fluidRow(
+          column(
+            9,
+            shinyWidgets::prettyRadioButtons(
+              inputId = ns("profile"), label = "Select a genomic profile:",
+              choiceValues = c("mRNA", "protein", "cnv"),
+              choiceNames = c("mRNA Expression", "Protein Expression", "Copy Number Variation"),
+              animation = "jelly"
+            ),
+            selectizeInput(
+              inputId = ns("ccle_search"),
+              label = NULL,
+              choices = NULL,
+              width = "100%",
+              options = list(
+                create = TRUE,
+                maxOptions = 5,
+                placeholder = "Enter a gene symbol, e.g. TP53",
+                plugins = list("restore_on_backspace")
+              )
+            ),
+          ),
+          column(
+            3,
+            shinyWidgets::actionBttn(
+              inputId = ns("search_bttn"), label = NULL,
+              style = "simple",
+              icon = icon("search"),
+              color = "primary",
+              block = FALSE,
+              size = "sm"
+            ),
+          ),
+          shinyBS::bsPopover(ns("ccle_search"),
+            title = "Tips",
+            content = "Enter a gene symbol to show its distribution, e.g. TP53",
+            placement = "right", options = list(container = "body")
+          ),
         ),
-        shinyBS::bsPopover(ns("ccle_search"),
-          title = "Tips",
-          content = "Enter a gene symbol to show its pan-can distribution, e.g. TP53",
-          placement = "right", options = list(container = "body")
-        ),
-        selectInput(inputId = ns("x.axis"), label = "x.axis", choices = ccle_choices, selected = "Type"),
         numericInput(inputId = ns("height"), label = "Height", value = 5),
         numericInput(inputId = ns("width"), label = "Width", value = 12),
         prettyRadioButtons(
@@ -36,16 +56,24 @@ ui.modules_ccle_dist <- function(id) {
         ),
         downloadBttn(
           outputId = ns("download"),
-          # label = "Download Plot",
           style = "gradient",
           color = "default",
           block = TRUE,
           size = "sm"
         ),
+        hr(),
+        tags$a(href = "https://xenabrowser.net/datapages/?cohort=Cancer%20Cell%20Line%20Encyclopedia%20(CCLE)&removeHub=https%3A%2F%2Ficgc.xenahubs.net", "Genomic profile data source"),
         width = 3
       ),
       mainPanel = mainPanel(
-        plotOutput(ns("gene_ccle_dist"), height = "600px")
+        plotOutput(ns("gene_ccle_dist"), height = "600px"),
+        DT::DTOutput(outputId = ns("tbl")),
+        shinyjs::hidden(
+          wellPanel(
+            id = ns("save_csv"),
+            downloadButton(ns("downloadTable"), "Save as csv")
+          )
+        )
       )
     )
   )
@@ -54,29 +82,48 @@ ui.modules_ccle_dist <- function(id) {
 server.modules_ccle_dist <- function(input, output, session) {
   ns <- session$ns
 
+  profile_choices <- reactive({
+    switch(input$profile,
+      mRNA = list(all = pancan_identifiers$gene, default = "TP53"),
+      protein = list(all = UCSCXenaShiny:::.all_ccle_proteins, default = "p53_Caution"),
+      cnv = list(all = pancan_identifiers$gene, default = "TP53"),
+      list(all = "NONE", default = "NONE")
+    )
+  })
+
+  observe({
+    updateSelectizeInput(
+      session,
+      "ccle_search",
+      choices = profile_choices()$all,
+      selected = profile_choices()$default,
+      server = TRUE
+    )
+  })
+
   # Show waiter for plot
   w <- waiter::Waiter$new(id = ns("gene_ccle_dist"), html = waiter::spin_hexdots(), color = "white")
 
-  plot_func <- reactive({
+  plot_func <- eventReactive(input$search_bttn, {
     if (nchar(input$ccle_search) >= 1) {
       p <- vis_ccle_tpm(
         Gene = input$ccle_search,
-        x.axis = input$x.axis
+        data_type = input$profile
       )
     }
     return(p)
   })
 
-  observeEvent(input$ccle_search, {
-    output$gene_ccle_dist <- renderPlot({
-      w$show() # Waiter add-ins
-      plot_func()
-    })
+
+  output$gene_ccle_dist <- renderPlot({
+    w$show() # Waiter add-ins
+    plot_func()
   })
+
 
   output$download <- downloadHandler(
     filename = function() {
-      paste0(input$ccle_search, " gene_ccle_dist.", input$device)
+      paste0(input$ccle_search, "_gene_ccle_dist.", input$device)
     },
     content = function(file) {
       p <- plot_func()
@@ -85,12 +132,34 @@ server.modules_ccle_dist <- function(input, output, session) {
         print(p)
         dev.off()
       } else {
-        png(file, width = input$width, height = input$height, res = 300, units = "in")
+        png(file, width = input$width, height = input$height, res = 600, units = "in")
         print(p)
         dev.off()
       }
+    }
+  )
 
-      # ggplot2::ggsave(filename = file, plot = print(p), device = input$device, width = input$width, height = input$height, dpi = 600)
+  ## return data
+  observeEvent(input$search_bttn, {
+    if (nchar(input$ccle_search) >= 1) {
+      shinyjs::show(id = "save_csv")
+    } else {
+      shinyjs::hide(id = "save_csv")
+    }
+  })
+
+  output$tbl <- renderDT(
+    plot_func()$data,
+    options = list(lengthChange = FALSE)
+  )
+
+  ## downloadTable
+  output$downloadTable <- downloadHandler(
+    filename = function() {
+      paste0(input$ccle_search, "_gene_ccle_dist.csv")
+    },
+    content = function(file) {
+      write.csv(plot_func()$data, file, row.names = FALSE)
     }
   )
 }

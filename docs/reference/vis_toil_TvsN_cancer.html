@@ -102,7 +102,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">UCSCXenaShiny</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.9.99</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.0</span>
       </span>
     </div>
 
@@ -176,8 +176,9 @@
     <pre class="usage"><span class='fu'>vis_toil_TvsN_cancer</span><span class='op'>(</span>
   Gene <span class='op'>=</span> <span class='st'>"TP53"</span>,
   Mode <span class='op'>=</span> <span class='st'>"Violinplot"</span>,
-  Show.P.value <span class='op'>=</span> <span class='cn'>TRUE</span>,
-  Show.P.label <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  data_type <span class='op'>=</span> <span class='st'>"mRNA"</span>,
+  Show.P.value <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  Show.P.label <span class='op'>=</span> <span class='cn'>FALSE</span>,
   Method <span class='op'>=</span> <span class='st'>"wilcox.test"</span>,
   values <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"#DF2020"</span>, <span class='st'>"#DDDF21"</span><span class='op'>)</span>,
   TCGA.only <span class='op'>=</span> <span class='cn'>FALSE</span>,
@@ -189,11 +190,18 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>Gene</th>
-      <td><p>Gene symbal for comparision</p></td>
+      <td><p>a molecular identifier (e.g., "TP53") or a formula specifying
+genomic signature (<code>"TP53 + 2 * KRAS - 1.3 * PTEN"</code>).</p></td>
     </tr>
     <tr>
       <th>Mode</th>
-      <td><p>Boxplot or Violinplot to represent data</p></td>
+      <td><p>"Boxplot" or "Violinplot" to represent data</p></td>
+    </tr>
+    <tr>
+      <th>data_type</th>
+      <td><p>choose gene profile type,
+including "mRNA", "transcript", "protein", "mutation", "cnv" (-2, -1, 0, 1, 2),
+"cnv_gistic2", "methylation", "miRNA".</p></td>
     </tr>
     <tr>
       <th>Show.P.value</th>
@@ -217,13 +225,13 @@
     </tr>
     <tr>
       <th>Cancer</th>
-      <td><p>select a cancer</p></td>
+      <td><p>select cancer cohort(s).</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>a <code>ggplot</code> object</p>
+    <p>a <code>ggplot</code> object.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

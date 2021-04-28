@@ -3,7 +3,7 @@
 [![CRAN
 status](https://www.r-pkg.org/badges/version/UCSCXenaShiny)](https://cran.r-project.org/package=UCSCXenaShiny)
 [![](http://cranlogs.r-pkg.org/badges/grand-total/UCSCXenaShiny?color=orange)](https://cran.r-project.org/package=UCSCXenaShiny)
-[![lifecycle](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
+[![lifecycle](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#maturing)
 ![R-CMD-check](https://github.com/openbiox/UCSCXenaShiny/workflows/R-CMD-check/badge.svg)
 [![Lines Of
 Code](https://tokei.rs/b1/github/openbiox/UCSCXenaShiny?category=code)](https://github.com/openbiox/UCSCXenaShiny)
@@ -68,9 +68,23 @@ app_run()
 # app_run("server")
 ```
 
+If you want deploy UCSC Xena Shiny with Shiny Server, please copy `App.R` and `www/` directory under [`shinyapp`](https://github.com/openbiox/UCSCXenaShiny/tree/master/inst/shinyapp).
+`xena.runMode` on the top of `App.R` is recommended to set as `"server"` instead of `"client"` (default).
+
 For advanced users, examples for illustrating useful functions to obtain and analyze data are described in vignette.
 
 All exported data and functions are organized at [here](https://openbiox.github.io/UCSCXenaShiny/reference/index.html).
+
+`xena.cacheDir` and `xena.zenodoDir` are two options to control where to store data.
+
+e.g.,
+
+```r
+options(xena.cacheDir = "/home/xxx/xena_data")
+```
+
+Option `xena.runMode` can be used to control the way how the Shiny works.
+It can be 'client' or 'server'. You can directly set it in `app_run()`.
 
 ## :writing_hand: Author
 

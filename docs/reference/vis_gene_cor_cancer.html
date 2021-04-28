@@ -102,7 +102,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">UCSCXenaShiny</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.9.99</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.0</span>
       </span>
     </div>
 
@@ -176,10 +176,15 @@
     <pre class="usage"><span class='fu'>vis_gene_cor_cancer</span><span class='op'>(</span>
   Gene1 <span class='op'>=</span> <span class='st'>"CSF1R"</span>,
   Gene2 <span class='op'>=</span> <span class='st'>"JAK3"</span>,
+  data_type1 <span class='op'>=</span> <span class='st'>"mRNA"</span>,
+  data_type2 <span class='op'>=</span> <span class='st'>"mRNA"</span>,
   purity_adj <span class='op'>=</span> <span class='cn'>TRUE</span>,
-  split <span class='op'>=</span> <span class='cn'>FALSE</span>,
   cancer_choose <span class='op'>=</span> <span class='st'>"GBM"</span>,
-  cor_method <span class='op'>=</span> <span class='st'>"spearman"</span>
+  use_regline <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  cor_method <span class='op'>=</span> <span class='st'>"spearman"</span>,
+  use_all <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  alpha <span class='op'>=</span> <span class='fl'>0.5</span>,
+  color <span class='op'>=</span> <span class='st'>"#000000"</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -187,27 +192,49 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>Gene1</th>
-      <td><p>the first gene.</p></td>
+      <td><p>a molecular identifier (e.g., "TP53") or a formula specifying
+genomic signature (<code>"TP53 + 2 * KRAS - 1.3 * PTEN"</code>).</p></td>
     </tr>
     <tr>
       <th>Gene2</th>
-      <td><p>the second gene.</p></td>
+      <td><p>a molecular identifier (e.g., "TP53") or a formula specifying
+genomic signature (<code>"TP53 + 2 * KRAS - 1.3 * PTEN"</code>).</p></td>
+    </tr>
+    <tr>
+      <th>data_type1</th>
+      <td><p>choose gene profile type for the first gene, including "mRNA","transcript","methylation","miRNA","protein","cnv_gistic2"</p></td>
+    </tr>
+    <tr>
+      <th>data_type2</th>
+      <td><p>choose gene profile type for the second gene, including "mRNA","transcript","methylation","miRNA","protein","cnv_gistic2"</p></td>
     </tr>
     <tr>
       <th>purity_adj</th>
-      <td><p>whether performing partial correlation adjusted by purity.</p></td>
-    </tr>
-    <tr>
-      <th>split</th>
-      <td><p>whether split by TCGA tumor tissue.</p></td>
+      <td><p>whether performing partial correlation adjusted by purity</p></td>
     </tr>
     <tr>
       <th>cancer_choose</th>
       <td><p>TCGA cohort name, e.g. "ACC".</p></td>
     </tr>
     <tr>
+      <th>use_regline</th>
+      <td><p>if <code>TRUE</code>, add regression line.</p></td>
+    </tr>
+    <tr>
       <th>cor_method</th>
       <td><p>correlation method.</p></td>
+    </tr>
+    <tr>
+      <th>use_all</th>
+      <td><p>use all sample, default <code>FALSE</code>.</p></td>
+    </tr>
+    <tr>
+      <th>alpha</th>
+      <td><p>dot alpha.</p></td>
+    </tr>
+    <tr>
+      <th>color</th>
+      <td><p>dot color.</p></td>
     </tr>
     </table>
 

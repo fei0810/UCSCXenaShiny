@@ -1,12 +1,31 @@
-# Detect run mode ---------------------------------------------------------
+# Global setting ---------------------------------------------------------
 xena.runMode <- getOption("xena.runMode", default = "client")
 message("Run mode: ", xena.runMode)
+
+if (is.null(getOption("xena.cacheDir"))) {
+  options(xena.cacheDir = switch(xena.runMode,
+                                 client = file.path(tempdir(), "UCSCXenaShiny"), 
+                                 server = "~/.xenashiny"
+  ))
+}
+
+# Path for storing dataset files
+XENA_DEST <- path.expand(file.path(getOption("xena.cacheDir"), "datasets"))
+
+if (!dir.exists(XENA_DEST)) {
+  dir.create(XENA_DEST, recursive = TRUE)
+}
+
+# Set default path for saving extra-data downloaded from https://zenodo.org
+if (xena.runMode == "server") {
+  if (is.null(getOption("xena.zenodoDir"))) options(xena.zenodoDir = XENA_DEST)
+}
 
 # Load necessary packages ----------------------------------
 message("Checking depedencies...")
 
 if (!requireNamespace("pacman")) {
-  install.packages("pacman")
+  install.packages("pacman", repos = "http://cran.r-project.org")
 }
 library(pacman)
 
@@ -16,6 +35,27 @@ if (!requireNamespace("gganatogram")) {
     remotes::install_github("jespermaag/gganatogram"),
     error = function(e) {
       remotes::install_git("https://gitee.com/XenaShiny/gganatogram")
+    }
+  )
+}
+
+if (!requireNamespace("ggradar")) {
+  pacman::p_load(remotes)
+  tryCatch(
+    remotes::install_github("ricardo-bion/ggradar"),
+    error = function(e) {
+      remotes::install_git("https://gitee.com/XenaShiny/ggradar")
+    }
+  )
+}
+
+if (packageVersion("UCSCXenaTools") < "1.4.4") {
+  tryCatch(
+    install.packages("UCSCXenaTools", repos = "http://cran.r-project.org"),
+    error = function(e) {
+      warning("UCSCXenaTools <1.4.4, this shiny has a known issue (the download button cannot be used) to work with it. Please upate this package!",
+        immediate. = TRUE
+      )
     }
   )
 }
@@ -48,14 +88,9 @@ pacman::p_load(
   RColorBrewer,
   gganatogram,
   ggstatsplot,
+  ggradar,
   zip
 )
-
-if (packageVersion("UCSCXenaTools") < "1.4.4") {
-  warning("UCSCXenaTools <1.4.4, this shiny has a known issue (the download button cannot be used) to work with it. Please upate this package!",
-    immediate. = TRUE
-  )
-}
 
 message("Starting...")
 
@@ -68,6 +103,7 @@ xena_table <- XenaData[, c(
 xena_table$SampleCount <- as.integer(xena_table$SampleCount)
 colnames(xena_table)[c(1:3)] <- c("Dataset ID", "Hub", "Cohort")
 
+# Used in TCGA survival module
 TCGA_datasets <- xena_table %>%
   dplyr::filter(Hub == "tcgaHub") %>%
   dplyr::select("Cohort") %>%
@@ -77,6 +113,14 @@ TCGA_datasets <- xena_table %>%
     des = stringr::str_match(Cohort, "(.*)\\s+\\(")[, 2]
   ) %>%
   dplyr::arrange(id)
+
+# Used in genecor and pancan-search-cancer module script
+tcga_cancer_choices <- c(
+  "SKCM", "THCA", "SARC", "PRAD", "PCPG", "PAAD", "HNSC", "ESCA",
+  "COAD", "CESC", "BRCA", "TGCT", "KIRP", "KIRC", "LAML", "READ",
+  "OV", "LUAD", "LIHC", "UCEC", "GBM", "LGG", "UCS", "THYM", "STAD",
+  "DLBC", "LUSC", "MESO", "KICH", "UVM", "BLCA", "CHOL", "ACC"
+)
 
 TCGA_cli_merged <- dplyr::full_join(
   load_data("tcga_clinical"),
@@ -91,6 +135,12 @@ pancan_identifiers <- readRDS(
   )
 )
 all_preload_identifiers <- c("NONE", as.character(unlist(pancan_identifiers)))
+tryCatch(
+  load_data("transcript_identifier"),
+  error = function(e) {
+    stop("Load data failed, please run load_data('transcript_identifier') by hand before restarting the Shiny.")
+  }
+)
 
 phenotype_datasets <- UCSCXenaTools::XenaData %>%
   dplyr::filter(Type == "clinicalMatrix") %>%
@@ -108,7 +158,17 @@ themes_list <- list(
 
 TIL_signatures <- colnames(load_data("tcga_TIL"))[-1]
 
-## data summary
+# CCLE tissues for drug analysis
+# "ALL" means all tissues
+ccle_drug_related_tissues <- c(
+  "ALL", "prostate", "central_nervous_system", "urinary_tract", "haematopoietic_and_lymphoid_tissue",
+  "kidney", "thyroid", "soft_tissue", "skin", "salivary_gland",
+  "ovary", "lung", "bone", "endometrium", "pancreas", "breast",
+  "large_intestine", "upper_aerodigestive_tract", "autonomic_ganglia",
+  "stomach", "liver", "biliary_tract", "pleura", "oesophagus"
+)
+
+# Data summary
 Data_hubs_number <- length(unique(xena_table$Hub))
 Cohorts_number <- length(unique(xena_table$Cohort))
 Datasets_number <- length(unique(xena_table$`Dataset ID`))
@@ -121,19 +181,8 @@ Xena_summary <- dplyr::group_by(xena_table, Hub) %>%
     n_dataset = length(unique(.data$`Dataset ID`)), .groups = "drop"
   )
 
-# global color
+# Global color
 mycolor <- c(RColorBrewer::brewer.pal(12, "Paired"))
-
-# Cache file dest directory
-XENA_DEST <- if (xena.runMode == "client") {
-  file.path(tempdir(), "UCSCXenaShiny")
-} else {
-  path.expand("~/.xenashiny/datasets")
-}
-
-if (!dir.exists(XENA_DEST)) {
-  dir.create(XENA_DEST, recursive = TRUE)
-}
 
 # Put modules here --------------------------------------------------------
 modules_path <- system.file("shinyapp", "modules", package = "UCSCXenaShiny", mustWork = TRUE)
@@ -203,7 +252,7 @@ get_data_df <- function(dataset, id) {
   colnames(df)[2] <- id
   df
 }
- 
+
 # UI part ----------------------------------------------------------------------
 ui <- tagList(
   tags$head(
@@ -220,7 +269,7 @@ ui <- tagList(
   ),
   shinyjs::useShinyjs(),
   use_waiter(),
-  waiter_on_busy(html= spin_3k(),color= transparent(0.7)),
+  waiter_on_busy(html = spin_3k(), color = transparent(0.7)),
   navbarPage(
     id = "navbar",
     title = div(

@@ -2,14 +2,12 @@ ui.modules_sur_plot <- function(id) {
   ns <- NS(id)
 
   fluidPage(
-    titlePanel("Module: Surviva Analysis"),
     fluidRow(
       column(3, wellPanel(
         selectInput(
           inputId = ns("dataset"), label = "Choose a dataset:",
           choices = setdiff(TCGA_datasets$id, "FPPP")
         ),
-
         shinyWidgets::prettyRadioButtons(
           inputId = ns("profile"), label = "Select a genomic profile:",
           choiceValues = c("mRNA", "transcript", "miRNA", "mutation", "cnv", "methylation", "protein"),
@@ -22,15 +20,12 @@ ui.modules_sur_plot <- function(id) {
           placement = "right", options = list(container = "body")
         ),
         shinyjs::hidden(
-          # shinyWidgets::searchInput(
           shinyWidgets::textInputAddon(
             inputId = ns("item_input"),
             label = "Item:",
             value = NULL,
             placeholder = "",
             addon = icon("dna"),
-            # btnSearch = icon("search"),
-            # btnReset = icon("remove"),
             width = "100%"
           )
         ),
@@ -70,32 +65,26 @@ ui.modules_sur_plot <- function(id) {
         h5("2. The default option <Auto> will return the best p value, if you do not want to do so please choose <Custom>."),
         tags$a(href = "https://pancanatlas.xenahubs.net", "Data source from Pan-Cancer Atlas Hub")
       )),
-
       shinyjs::hidden(
         column(3, id = ns("parameter"), wellPanel(
           sliderInput(
             inputId = ns("age"), label = "Age",
             min = 0, max = 100, value = c(0, 100)
           ),
-
           shinyWidgets::prettyCheckboxGroup(
             inputId = ns("sex"), label = "Sex",
             choices = c("Female" = "FEMALE", "Male" = "MALE", "Unknown" = "Unknown"),
             selected = c("FEMALE", "MALE", "Unknown"),
-            # icon = icon("check-square-o"),
             status = "primary",
             animation = "jelly"
           ),
-
           shinyWidgets::prettyCheckboxGroup(
             inputId = ns("stage"), label = "Clinical/Pathological stage",
             choices = c("I", "II", "III", "IV", "Unknown"),
             selected = c("I", "II", "III", "IV", "Unknown"),
-            # icon = icon("check"),
             status = "primary",
             animation = "jelly"
           ),
-
           shinyWidgets::prettyRadioButtons(
             inputId = ns("endpoint"),
             label = "Primary endpoint",
@@ -104,7 +93,6 @@ ui.modules_sur_plot <- function(id) {
             icon = icon("check"),
             animation = "jelly"
           ),
-
           conditionalPanel(
             condition = "input.profile == 'mRNA' | input.profile == 'protein' | input.profile == 'miRNA' | input.profile == 'methylation' | input.profile == 'transcript'",
             ns = ns,
@@ -127,12 +115,10 @@ ui.modules_sur_plot <- function(id) {
               hr()
             )
           ),
-
           conditionalPanel(
             condition = "input.profile == 'mutation'", ns = ns,
             tags$p("Note: In TCGA somatic mutation (SNP and INDEL) dataset, mutation type is represented by 1 and wild type is 0.")
           ),
-
           conditionalPanel(
             condition = "input.profile == 'cnv'", ns = ns,
             awesomeCheckboxGroup(
@@ -140,12 +126,10 @@ ui.modules_sur_plot <- function(id) {
               label = "Select CNV type.",
               choices = c("Normal", "Duplicated", "Deleted"),
               selected = c("Normal", "Duplicated", "Deleted"),
-              # status = "danger",
               width = "120%",
               inline = TRUE
             )
           ),
-
           shinyWidgets::actionBttn(
             inputId = ns("go"), label = " GO!",
             style = "gradient",
@@ -170,10 +154,8 @@ ui.modules_sur_plot <- function(id) {
               fill = TRUE
             )
           ),
-
           downloadBttn(
             outputId = ns("download"),
-            # label = "Download Plot",
             style = "gradient",
             color = "default",
             block = TRUE,
@@ -181,11 +163,18 @@ ui.modules_sur_plot <- function(id) {
           )
         ))
       ),
-
       column(
         6,
         verbatimTextOutput(ns("plot_text")),
-        plotOutput(ns("surplot"), height = "600px")
+        plotOutput(ns("surplot"), height = "600px"),
+        tags$hr(),
+        DT::DTOutput(outputId = ns("tbl")),
+        shinyjs::hidden(
+          wellPanel(
+            id = ns("save_csv"),
+            downloadButton(ns("downloadTable"), "Save as csv")
+          )
+        )
       )
     )
   )
@@ -242,7 +231,6 @@ server.modules_sur_plot <- function(input, output, session) {
   observeEvent(input$submit_bt, {
     shinyjs::show("progress")
     if (!is.null(sur_dat_pre())) {
-      # updateProgressBar(session = session, id = ns("progressbar"), value = 70)
       shinyjs::show("parameter")
     }
     shinyjs::hide("progress")
@@ -264,7 +252,6 @@ server.modules_sur_plot <- function(input, output, session) {
   }, )
 
   filter_dat <- eventReactive(input$go, {
-    # req(input$age,input$sex,input$stage)
     if (is.null(sur_dat_pre())) {
       return(NULL)
     }
@@ -292,11 +279,12 @@ server.modules_sur_plot <- function(input, output, session) {
   plot_func <- eventReactive(input$go, {
     if (!is.null(filter_dat())) {
       if (nrow(filter_dat()) >= 10) {
-        p <- tcga_surv_plot(filter_dat(), 
-                            cutoff_mode = input$cutoff_mode,
-                            cutpoint = input$cutpoint,
-                            cnv_type = input$cs_cnv,
-                            profile = input$profile)
+        p <- tcga_surv_plot(filter_dat(),
+          cutoff_mode = input$cutoff_mode,
+          cutpoint = input$cutpoint,
+          cnv_type = input$cs_cnv,
+          profile = input$profile
+        )
         if (is.null(p)) {
           sendSweetAlert(
             session = session,
@@ -309,6 +297,16 @@ server.modules_sur_plot <- function(input, output, session) {
       } else {
         return(NULL)
       }
+    } else {
+      return(NULL)
+    }
+  })
+
+  return_data <- eventReactive(input$go, {
+    if (!is.null(filter_dat()) & nrow(filter_dat()) >= 10) {
+      shinyjs::show(id = "save_csv")
+      select_data <- dplyr::select(filter_dat(), sampleID, value, status, time)
+      return(select_data)
     } else {
       return(NULL)
     }
@@ -352,8 +350,28 @@ server.modules_sur_plot <- function(input, output, session) {
       p <- plot_func()
       ggplot2::ggsave(
         filename = file, plot = print(p, newpage = F), device = input$device,
-        units = "cm",  width = input$width, height = input$height, dpi = 600
+        units = "cm", width = input$width, height = input$height, dpi = 600
       )
+    }
+  )
+
+  output$tbl <- renderDT(
+    return_data(),
+    options = list(lengthChange = FALSE)
+  )
+
+  ## downloadTable
+  output$downloadTable <- downloadHandler(
+    filename = function() {
+      if (input$profile == "protein") {
+        item_show <- input$protein_input
+      } else {
+        item_show <- input$item_input
+      }
+      paste0(item_show, "_", input$profile, "_sur.csv")
+    },
+    content = function(file) {
+      write.csv(return_data(), file, row.names = FALSE)
     }
   )
 }
@@ -376,4 +394,3 @@ dat_filter <- function(data, age, gender, stage, endpoint) {
     )
   return(dat)
 }
-

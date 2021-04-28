@@ -48,7 +48,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">UCSCXenaShiny</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.9.99</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.0</span>
       </span>
     </div>
 
@@ -112,7 +112,7 @@
       <h1 data-toc-skip>Examples of Accessible Functions</h1>
                         <h4 class="author">Shixiang Wang, Yi Xiong, Longfei Zhao, Kai Gu, Yin Li, Fei Zhao</h4>
             
-            <h4 class="date">2021-04-15</h4>
+            <h4 class="date">2021-04-27</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/openbiox/UCSCXenaShiny/blob/master/vignettes/api.Rmd"><code>vignettes/api.Rmd</code></a></small>
       <div class="hidden name"><code>api.Rmd</code></div>
@@ -127,13 +127,13 @@
 <div id="fetch-data" class="section level2">
 <h2 class="hasAnchor">
 <a href="#fetch-data" class="anchor"></a>Fetch Data</h2>
-<p>We provide function to retrieve multi-dimensional data including genomic, epigenomic, transcriptomic, and proteomic data from TCGA and CCLE Pan-Cancer dataset for single identifier (e.g., gene, protein).</p>
+<p>We provide function to retrieve multi-dimensional data including genomic, epigenomic, transcriptomic, and proteomic data from TCGA (note, this actually contains data from TCGA/TARGET/GTEx databases) and CCLE Pan-Cancer dataset for single identifier (e.g., gene, protein).</p>
 <p>Check parameters:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/args.html">args</a></span><span class="op">(</span><span class="va">query_value</span><span class="op">)</span>
-<span class="co">#&gt; function (identifier, data_type = c("mRNA", "transcript", "protein", </span>
-<span class="co">#&gt;     "mutation", "cnv", "methylation", "miRNA"), database = c("toil", </span>
-<span class="co">#&gt;     "ccle")) </span>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/args.html">args</a></span><span class="op">(</span><span class="va">query_pancan_value</span><span class="op">)</span>
+<span class="co">#&gt; function (molecule, data_type = c("mRNA", "transcript", "protein", </span>
+<span class="co">#&gt;     "mutation", "cnv", "cnv_gistic2", "methylation", "miRNA"), </span>
+<span class="co">#&gt;     database = c("toil", "ccle"), reset_id = NULL) </span>
 <span class="co">#&gt; NULL</span></code></pre></div>
 <p>For TCGA gene expression data, we use Xena dataset with ID <code>TcgaTargetGtex_rsem_gene_tpm</code> which includes 19131 samples with tumor tissue samples and normal tissue samples. The expression value unit is <code><a href="https://rdrr.io/r/base/Log.html">log2(tpm+0.001)</a></code>.</p>
 <p>Let’s check several examples.</p>
@@ -141,7 +141,7 @@
 <h3 class="hasAnchor">
 <a href="#fetch-gene-expression" class="anchor"></a>Fetch Gene Expression</h3>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">gene_expr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/query_value.html">query_value</a></span><span class="op">(</span><span class="st">"TP53"</span><span class="op">)</span>
+<code class="sourceCode R"><span class="va">gene_expr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/query_pancan_value.html">query_pancan_value</a></span><span class="op">(</span><span class="st">"TP53"</span><span class="op">)</span>
 <span class="co">#&gt; Running mode: client</span>
 <span class="co">#&gt; =========================================================================================</span>
 <span class="co">#&gt; UCSCXenaTools version 1.4.4</span>
@@ -173,25 +173,25 @@
 <h3 class="hasAnchor">
 <a href="#fetch-transcript-expression" class="anchor"></a>Fetch Transcript Expression</h3>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">transcript_expr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/query_value.html">query_value</a></span><span class="op">(</span><span class="st">"ENST00000000233"</span>, data_type <span class="op">=</span> <span class="st">"transcript"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="va">transcript_expr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/query_pancan_value.html">query_pancan_value</a></span><span class="op">(</span><span class="st">"ENST00000000233"</span>, data_type <span class="op">=</span> <span class="st">"transcript"</span><span class="op">)</span></code></pre></div>
 </div>
 <div id="fetch-gene-cnv" class="section level3">
 <h3 class="hasAnchor">
 <a href="#fetch-gene-cnv" class="anchor"></a>Fetch Gene CNV</h3>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">gene_cnv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/query_value.html">query_value</a></span><span class="op">(</span><span class="st">"TP53"</span>, data_type <span class="op">=</span> <span class="st">"cnv"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="va">gene_cnv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/query_pancan_value.html">query_pancan_value</a></span><span class="op">(</span><span class="st">"TP53"</span>, data_type <span class="op">=</span> <span class="st">"cnv"</span><span class="op">)</span></code></pre></div>
 </div>
 <div id="fetch-gene-mutation" class="section level3">
 <h3 class="hasAnchor">
 <a href="#fetch-gene-mutation" class="anchor"></a>Fetch Gene Mutation</h3>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">gene_mut</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/query_value.html">query_value</a></span><span class="op">(</span><span class="st">"TP53"</span>, data_type <span class="op">=</span> <span class="st">"mutation"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="va">gene_mut</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/query_pancan_value.html">query_pancan_value</a></span><span class="op">(</span><span class="st">"TP53"</span>, data_type <span class="op">=</span> <span class="st">"mutation"</span><span class="op">)</span></code></pre></div>
 </div>
 <div id="fetch-mirna-mature-strand-expression" class="section level3">
 <h3 class="hasAnchor">
 <a href="#fetch-mirna-mature-strand-expression" class="anchor"></a>Fetch miRNA mature strand expression</h3>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">miRNA_expr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/query_value.html">query_value</a></span><span class="op">(</span><span class="st">"hsa-let-7a-2-3p"</span>, data_type <span class="op">=</span> <span class="st">"miRNA"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="va">miRNA_expr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/query_pancan_value.html">query_pancan_value</a></span><span class="op">(</span><span class="st">"hsa-let-7a-2-3p"</span>, data_type <span class="op">=</span> <span class="st">"miRNA"</span><span class="op">)</span></code></pre></div>
 </div>
 </div>
 <div id="data-visualization" class="section level2">

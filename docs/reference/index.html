@@ -101,7 +101,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">UCSCXenaShiny</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.9.99</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.0</span>
       </span>
     </div>
 
@@ -274,9 +274,15 @@
       <tr>
         
         <td>
-          <p><code><a href="query_value.html">query_value()</a></code> </p>
+          <p><code><a href="query_molecule_value.html">query_molecule_value()</a></code> </p>
         </td>
-        <td><p>Query Single Identifier Value from Pan-cancer Database</p></td>
+        <td><p>Get Molecule or Signature Data Values from Dense (Genomic) Matrix Dataset of UCSC Xena Data Hubs</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="query_pancan_value.html">query_pancan_value()</a></code> </p>
+        </td>
+        <td><p>Query Single Identifier or Signature Value from Pan-cancer Database</p></td>
       </tr><tr>
         
         <td>
@@ -286,9 +292,9 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="ope_toil_gene.html">ope_toil_gene()</a></code> </p>
+          <p><code><a href="query_toil_value_df.html">query_toil_value_df()</a></code> <code><a href="query_toil_value_df.html">query_toil_value_df()</a></code> </p>
         </td>
-        <td><p>Obtain ToilHub Info for Single Gene</p></td>
+        <td><p>Obtain ToilHub Info for Single Molecule</p></td>
       </tr><tr>
         
         <td>
@@ -317,9 +323,39 @@
       </tr><tr>
         
         <td>
+          <p><code><a href="analyze_gene_drug_response_asso.html">analyze_gene_drug_response_asso()</a></code> </p>
+        </td>
+        <td><p>Analyze Association between Gene (Signature) and Drug Response with CCLE Data</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="vis_gene_drug_response_asso.html">vis_gene_drug_response_asso()</a></code> </p>
+        </td>
+        <td><p>Visualize Gene and Drug-Target Association with CCLE Data</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="analyze_gene_drug_response_diff.html">analyze_gene_drug_response_diff()</a></code> </p>
+        </td>
+        <td><p>Analyze Difference of Drug Response (IC50 Value (uM)) between Gene (Signature) High and Low Expression with CCLE Data</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="vis_gene_drug_response_diff.html">vis_gene_drug_response_diff()</a></code> </p>
+        </td>
+        <td><p>Visualize Gene and Drug Response Difference with CCLE Data</p></td>
+      </tr><tr>
+        
+        <td>
           <p><code><a href="vis_ccle_tpm.html">vis_ccle_tpm()</a></code> </p>
         </td>
-        <td><p>Visualize CCLE Gene Expression in TPM Format</p></td>
+        <td><p>Visualize CCLE Gene Expression</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="vis_ccle_gene_cor.html">vis_ccle_gene_cor()</a></code> </p>
+        </td>
+        <td><p>Visualize CCLE Gene Expression Correlation</p></td>
       </tr><tr>
         
         <td>
@@ -356,6 +392,12 @@
           <p><code><a href="vis_gene_tmb_cor.html">vis_gene_tmb_cor()</a></code> </p>
         </td>
         <td><p>Visualize Correlation between Gene and TMB (Tumor Mutation Burden)</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="vis_gene_msi_cor.html">vis_gene_msi_cor()</a></code> </p>
+        </td>
+        <td><p>Visualize Correlation between Gene and MSI (Microsatellite instability)</p></td>
       </tr><tr>
         
         <td>

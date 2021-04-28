@@ -6,14 +6,20 @@
 \usage{
 vis_gene_immune_cor(
   Gene = "TP53",
-  Cor_method = "spearman",
+  cor_method = "spearman",
+  data_type = "mRNA",
   Immune_sig_type = "Cibersort"
 )
 }
 \arguments{
-\item{Gene}{Gene symbal for comparision}
+\item{Gene}{a molecular identifier (e.g., "TP53") or a formula specifying
+genomic signature (\code{"TP53 + 2 * KRAS - 1.3 * PTEN"}).}
 
-\item{Cor_method}{correlation method}
+\item{cor_method}{correlation method}
+
+\item{data_type}{choose gene profile type,
+including "mRNA", "transcript", "protein", "mutation", "cnv" (-2, -1, 0, 1, 2),
+"cnv_gistic2", "methylation", "miRNA".}
 
 \item{Immune_sig_type}{quantification method, default is "Cibersort"}
 }
@@ -21,7 +27,7 @@ vis_gene_immune_cor(
 Heatmap for Correlation between Gene and Immune Signatures
 }
 \examples{
-\donttest{
+\dontrun{
 p <- vis_gene_immune_cor(Gene = "TP53")
 }
 }

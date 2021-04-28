@@ -7,8 +7,9 @@
 vis_toil_TvsN_cancer(
   Gene = "TP53",
   Mode = "Violinplot",
-  Show.P.value = TRUE,
-  Show.P.label = TRUE,
+  data_type = "mRNA",
+  Show.P.value = FALSE,
+  Show.P.label = FALSE,
   Method = "wilcox.test",
   values = c("#DF2020", "#DDDF21"),
   TCGA.only = FALSE,
@@ -16,9 +17,14 @@ vis_toil_TvsN_cancer(
 )
 }
 \arguments{
-\item{Gene}{Gene symbal for comparision}
+\item{Gene}{a molecular identifier (e.g., "TP53") or a formula specifying
+genomic signature (\code{"TP53 + 2 * KRAS - 1.3 * PTEN"}).}
 
-\item{Mode}{Boxplot or Violinplot to represent data}
+\item{Mode}{"Boxplot" or "Violinplot" to represent data}
+
+\item{data_type}{choose gene profile type,
+including "mRNA", "transcript", "protein", "mutation", "cnv" (-2, -1, 0, 1, 2),
+"cnv_gistic2", "methylation", "miRNA".}
 
 \item{Show.P.value}{\code{TRUE} or \code{FALSE} whether to count P value}
 
@@ -30,10 +36,10 @@ vis_toil_TvsN_cancer(
 
 \item{TCGA.only}{include samples only from TCGA dataset}
 
-\item{Cancer}{select a cancer}
+\item{Cancer}{select cancer cohort(s).}
 }
 \value{
-a \code{ggplot} object
+a \code{ggplot} object.
 }
 \description{
 Visualize Gene TPM in Single Cancer Type (Tumor (TCGA) vs Normal (TCGA & GTEx))

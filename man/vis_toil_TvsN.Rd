@@ -7,6 +7,7 @@
 vis_toil_TvsN(
   Gene = "TP53",
   Mode = "Boxplot",
+  data_type = "mRNA",
   Show.P.value = TRUE,
   Show.P.label = TRUE,
   Method = "wilcox.test",
@@ -17,9 +18,14 @@ vis_toil_TvsN(
 )
 }
 \arguments{
-\item{Gene}{Gene symbal for comparision}
+\item{Gene}{a molecular identifier (e.g., "TP53") or a formula specifying
+genomic signature (\code{"TP53 + 2 * KRAS - 1.3 * PTEN"}).}
 
-\item{Mode}{Boxplot or Violinplot to represent data}
+\item{Mode}{"Boxplot" or "Violinplot" to represent data}
+
+\item{data_type}{choose gene profile type,
+including "mRNA", "transcript", "protein", "mutation", "cnv" (-2, -1, 0, 1, 2),
+"cnv_gistic2", "methylation", "miRNA".}
 
 \item{Show.P.value}{\code{TRUE} or \code{FALSE} whether to count P value}
 
@@ -42,7 +48,7 @@ a \code{ggplot} object
 Visualize Pan-cancer TPM (tumor (TCGA) vs Normal (TCGA & GTEx))
 }
 \examples{
-\donttest{
+\dontrun{
 p <- vis_toil_TvsN(Gene = "TP53", Mode = "Violinplot", Show.P.value = FALSE, Show.P.label = FALSE)
 p <- vis_toil_TvsN(Gene = "TP53", Mode = "Boxplot", Show.P.value = FALSE, Show.P.label = FALSE)
 }

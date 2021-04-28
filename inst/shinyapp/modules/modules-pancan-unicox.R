@@ -1,15 +1,20 @@
 ui.modules_pancan_unicox <- function(id) {
   ns <- NS(id)
   fluidPage(
-    titlePanel("Module: Gene Pancan Uni-cox analysis"),
     sidebarLayout(
       sidebarPanel = sidebarPanel(
         fluidRow(
           column(
             9,
+            shinyWidgets::prettyRadioButtons(
+              inputId = ns("profile"), label = "Select a genomic profile:",
+              choiceValues = c("mRNA", "transcript", "methylation", "protein", "miRNA", "cnv_gistic2"),
+              choiceNames = c("mRNA Expression", "Transcript Expression", "DNA Methylation", "Protein Expression", "miRNA Expression", "Copy Number Variation"),
+              animation = "jelly"
+            ),
             selectizeInput(
               inputId = ns("Pancan_search"),
-              label = NULL,
+              label = "Input a gene or formula (as signature)",
               choices = NULL,
               width = "100%",
               options = list(
@@ -32,11 +37,6 @@ ui.modules_pancan_unicox <- function(id) {
             )
           )
         ),
-        shinyBS::bsPopover(ns("Pancan_search"),
-          title = "Tips",
-          content = "Enter a gene symbol to show its pan-can distribution, e.g. TP53",
-          placement = "right", options = list(container = "body")
-        ),
         selectInput(inputId = ns("measure"), label = "Select Measure for plot", choices = c("OS", "PFI", "DSS", "DFI"), selected = "OS"),
         selectInput(inputId = ns("threshold"), label = "Select Threshold for plot", choices = c(0.25, 0.5), selected = 0.5),
         colourpicker::colourInput(inputId = ns("first_col"), "First color", "#6A6F68"),
@@ -56,7 +56,6 @@ ui.modules_pancan_unicox <- function(id) {
         ),
         downloadBttn(
           outputId = ns("download"),
-          # label = "Download Plot",
           style = "gradient",
           color = "default",
           block = TRUE,
@@ -66,9 +65,11 @@ ui.modules_pancan_unicox <- function(id) {
       ),
       mainPanel = mainPanel(
         plotOutput(ns("unicox_gene_tree"), height = "500px"),
+        hr(),
         h5("NOTEs:"),
         p("1. We define gene in certain cancer type as risky (log(Hazard Ratio) > 0) or protective (log(Hazard Ratio) < 0) or NS (No statistical significance, P value > 0.05)"),
         p("2. We divide patients into different groups for comparison according to gene expression, you could choose the threshold for grouping (0.5 by default)"),
+        p("3. ", tags$a(href = "https://pancanatlas.xenahubs.net/", "Genomic profile data source")),
         DT::DTOutput(outputId = ns("tbl")),
         shinyjs::hidden(
           wellPanel(
@@ -76,7 +77,7 @@ ui.modules_pancan_unicox <- function(id) {
             downloadButton(ns("downloadTable"), "Save as csv")
           )
         ),
-        width = 6
+        width = 4
       )
     )
   )
@@ -86,12 +87,24 @@ ui.modules_pancan_unicox <- function(id) {
 server.modules_pancan_unicox <- function(input, output, session) {
   ns <- session$ns
 
+  profile_choices <- reactive({
+    switch(input$profile,
+      mRNA = list(all = pancan_identifiers$gene, default = "TP53"),
+      methylation = list(all = pancan_identifiers$gene, default = "TP53"),
+      protein = list(all = pancan_identifiers$protein, default = "P53"),
+      transcript = list(all = load_data("transcript_identifier"), default = "ENST00000000233"),
+      miRNA = list(all = pancan_identifiers$miRNA, default = "hsa-miR-769-3p"),
+      cnv_gistic2 = list(all = pancan_identifiers$gene, default = "TP53"),
+      list(all = "NONE", default = "NONE")
+    )
+  })
+
   observe({
     updateSelectizeInput(
       session,
       "Pancan_search",
-      choices = pancan_identifiers$gene,
-      selected = "TP53",
+      choices = profile_choices()$all,
+      selected = profile_choices()$default,
       server = TRUE
     )
   })
@@ -103,85 +116,65 @@ server.modules_pancan_unicox <- function(input, output, session) {
     c(input$first_col, input$second_col, input$third_col)
   })
 
-  return_data <- reactive({
+  observeEvent(input$search_bttn, {
     if (nchar(input$Pancan_search) >= 1) {
       shinyjs::show(id = "save_csv")
-      p <- vis_unicox_tree(
-        Gene = input$Pancan_search,
-        measure = input$measure,
-        threshold = input$threshold,
-        values = colors()
-      )
-      data <- p$data
-      data <- data %>%
-        as.data.frame() %>%
-        dplyr::select(cancer, measure, n_contrast, n_ref, beta, HR_log, lower_95_log, upper_95_log, Type, p.value)
-      return(data)
     } else {
       shinyjs::hide(id = "save_csv")
     }
   })
 
-
-  plot_func <- reactive({
+  plot_func <- eventReactive(input$search_bttn, {
     if (nchar(input$Pancan_search) >= 1) {
       p <- vis_unicox_tree(
         Gene = input$Pancan_search,
         measure = input$measure,
         threshold = input$threshold,
+        data_type = input$profile,
         values = colors()
       )
-
-      p <- p + theme_cowplot()
+      pdata <- p$data %>% 
+        as.data.frame() %>%
+        dplyr::select(cancer, measure, n_contrast, n_ref, beta, HR_log, lower_95_log, upper_95_log, Type, p.value)
+      return(list(plot = p, data = pdata))
     }
-
-    return(p)
   })
 
-  observeEvent(input$search_bttn, {
-    # output$colorvalues = reactive({c(input$tumor_col,input$normal_col)
-    #   })
-    output$unicox_gene_tree <- renderPlot({
-      w$show() # Waiter add-ins
-      plot_func()
-    })
+  output$unicox_gene_tree <- renderPlot({
+    w$show() # Waiter add-ins
+    plot_func()$plot
   })
 
   output$download <- downloadHandler(
     filename = function() {
-      paste0(input$Pancan_search, " gene_pancan_unicox.", input$device)
+      paste0(input$Pancan_search, "_", input$profile, "_", input$measure, "_pancan_unicox.", input$device)
     },
     content = function(file) {
-      p <- plot_func()
+      p <- plot_func()$plot
       if (input$device == "pdf") {
         pdf(file, width = input$width, height = input$height)
         print(p)
         dev.off()
       } else {
-        png(file, width = input$width, height = input$height, res = 300, units = "in")
+        png(file, width = input$width, height = input$height, res = 600, units = "in")
         print(p)
         dev.off()
       }
-
-      # ggplot2::ggsave(filename = file, plot = print(p), device = input$device, width = input$width, height = input$height, dpi = 600)
     }
   )
 
-  observeEvent(input$search_bttn, {
-    output$tbl <- renderDT(
-      data <- return_data(),
-      options = list(lengthChange = FALSE)
-    )
-  })
-  
- 
+
+  output$tbl <- renderDT(
+    plot_func()$data,
+    options = list(lengthChange = FALSE)
+  )
 
   output$downloadTable <- downloadHandler(
     filename = function() {
-      paste0(input$Pancan_search, "_", input$measure, "_gene_pancan_unicox.csv")
+      paste0(input$Pancan_search, "_", input$profile, "_", input$measure, "_pancan_unicox.csv")
     },
     content = function(file) {
-      write.csv(data <- return_data(), file, row.names = FALSE)
+      write.csv(plot_func()$data, file, row.names = FALSE)
     }
   )
 }

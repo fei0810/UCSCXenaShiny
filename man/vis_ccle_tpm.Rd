@@ -2,18 +2,21 @@
 % Please edit documentation in R/vis_ccle_value.R
 \name{vis_ccle_tpm}
 \alias{vis_ccle_tpm}
-\title{Visualize CCLE Gene Expression in TPM Format}
+\title{Visualize CCLE Gene Expression}
 \usage{
-vis_ccle_tpm(Gene = "TP53", x.axis = "Type")
+vis_ccle_tpm(Gene = "TP53", data_type = "mRNA", use_log = FALSE)
 }
 \arguments{
-\item{Gene}{Gene symbal for comparision}
+\item{Gene}{a molecular identifier (e.g., "TP53") or a formula specifying
+genomic signature (\code{"TP53 + 2 * KRAS - 1.3 * PTEN"}).}
 
-\item{x.axis}{Different parameters for x.axis}
+\item{data_type}{support genomic profile for CCLE, currently "mRNA", "protein","cnv" are supported}
+
+\item{use_log}{if \code{TRUE}, log values.}
 }
 \value{
 a \code{ggplot} object
 }
 \description{
-Visualize CCLE Gene Expression in TPM Format
+Visualize CCLE Gene Expression
 }

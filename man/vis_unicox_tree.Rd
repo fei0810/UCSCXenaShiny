@@ -7,14 +7,18 @@
 vis_unicox_tree(
   Gene = "TP53",
   measure = "OS",
+  data_type = "mRNA",
   threshold = 0.5,
   values = c("grey", "#E31A1C", "#377DB8")
 )
 }
 \arguments{
-\item{Gene}{Gene symbal for comparision}
+\item{Gene}{a molecular identifier (e.g., "TP53") or a formula specifying
+genomic signature (\code{"TP53 + 2 * KRAS - 1.3 * PTEN"}).}
 
 \item{measure}{a survival measure, e.g. "OS".}
+
+\item{data_type}{choose gene profile type, including "mRNA","transcript","methylation","miRNA","protein","cnv_gistic2"}
 
 \item{threshold}{a expression cutoff, \code{0.5} for median.}
 
@@ -27,7 +31,7 @@ a \code{ggplot} object
 Visualize Single Gene Univariable Cox Result from Toil Data Hub
 }
 \examples{
-\donttest{
+\dontrun{
 p <- vis_unicox_tree(Gene = "TP53")
 }
 }

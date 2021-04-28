@@ -27,7 +27,7 @@ available_hosts <- function() {
 #' @return a named vector or `list`
 #'
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' # Fetch TP53 expression value from pan-cancer dataset
 #' t1 <- get_pancan_value("TP53",
 #'   dataset = "TcgaTargetGtex_rsem_isoform_tpm",
@@ -67,7 +67,7 @@ get_pancan_value <- function(identifier, subtype = NULL, dataset = NULL, host = 
   }
 
   if (nrow(data) > 1) {
-    data <- dplyr::filter(.data$XenaDatasets == dataset)
+    data <- dplyr::filter(data, .data$XenaDatasets == dataset)
   }
 
   res <- try_query_value(data[["XenaHosts"]], data[["XenaDatasets"]],
@@ -225,14 +225,20 @@ get_pancan_mutation_status <- function(identifier) {
   return(data)
 }
 
+#' @param use_thresholded_data if `TRUE` (default), use GISTIC2-thresholded value.
 #' @describeIn get_pancan_value Fetch gene copy number value from pan-cancer dataset processed by GISTIC 2.0
 #' @export
-get_pancan_cn_value <- function(identifier) {
+get_pancan_cn_value <- function(identifier, use_thresholded_data = TRUE) {
   host <- "tcgaHub"
-  dataset <- "TCGA.PANCAN.sampleMap/Gistic2_CopyNumber_Gistic2_all_thresholded.by_genes"
+  if (use_thresholded_data) {
+    dataset <- "TCGA.PANCAN.sampleMap/Gistic2_CopyNumber_Gistic2_all_thresholded.by_genes"
+    unit <- "-2,-1,0,1,2: 2 copy del,1 copy del,no change,amplification,high-amplification"
+  } else {
+    dataset <- "TCGA.PANCAN.sampleMap/Gistic2_CopyNumber_Gistic2_all_data_by_genes"
+    unit <- "Gistic2 copy number"
+  }
 
   data <- get_data(dataset, identifier, host)
-  unit <- "-2,-1,0,1,2: 2 copy del,1 copy del,no change,amplification,high-amplification"
   report_dataset_info(dataset)
   res <- list(data = data, unit = unit)
   res
@@ -284,41 +290,14 @@ report_dataset_info <- function(dataset) {
   message(msg)
 }
 
-get_run_mode <- function() {
-  getOption("xena.runMode", default = "client")
-}
-
-# For internal debugging use
-rm_pkg_cache <- function() {
-  if (get_run_mode() == "client") {
-    unlink(path.expand(file.path(
-      tempdir(), "UCSCXenaShiny"
-    )))
-  } else {
-    unlink(path.expand("~/.xenashiny"))
-  }
-}
-
 check_file <- function(id, dataset, host) {
-  runMode <- get_run_mode()
-  message("Running mode: ", runMode)
-  f <- switch(runMode,
-    client = path.expand(file.path(
-      tempdir(), "UCSCXenaShiny",
-      paste0(
-        host, "_",
-        gsub("[/]", "_", dataset),
-        "_", id, ".rds"
-      )
-    )),
-    server = path.expand(file.path(
-      "~/.xenashiny",
-      paste0(
-        host, "_",
-        gsub("[/]", "_", dataset),
-        "_", id, ".rds"
-      )
-    ))
+  f <- file.path(
+    get_cache_dir(),
+    paste0(
+      host, "_",
+      gsub("[/]", "_", dataset),
+      "_", id, ".rds"
+    )
   )
   return(f)
 }
@@ -326,10 +305,26 @@ check_file <- function(id, dataset, host) {
 check_exist_data <- function(id, dataset, host) {
   f <- check_file(id, dataset, host)
   if (file.exists(f)) {
-    return(list(
-      ok = TRUE,
-      data = readRDS(f)
-    ))
+    data <- tryCatch(
+      readRDS(f),
+      error = function(e) {
+        message("Read cache data failed.")
+        return(NULL)
+      }
+    )
+    if (!is.null(data)) {
+      return(list(
+        ok = TRUE,
+        data = data
+      ))
+    } else {
+      return(
+        list(
+          ok = FALSE,
+          data = NULL
+        )
+      )
+    }
   } else {
     return(
       list(
@@ -346,7 +341,12 @@ save_data <- function(data, id, dataset, host) {
     dir.create(dirname(f), recursive = TRUE)
   }
 
-  saveRDS(data, file = f)
+  tryCatch(
+    saveRDS(data, file = f),
+    error = function(e) {
+      message("Save data to cache directory failed.")
+    }
+  )
 }
 
 get_data <- function(dataset, identifier, host = NULL) {

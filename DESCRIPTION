@@ -1,6 +1,6 @@
 Package: UCSCXenaShiny
 Title: A Shiny App for UCSC Xena Database
-Version: 0.9.99
+Version: 1.0.0
 Authors@R: 
     c(person(given = "Shixiang",
              family = "Wang",
@@ -63,12 +63,15 @@ Suggests:
     DT (>= 0.5),
     furrr,
     future,
+    ggrepel,
     ggstatsplot,
     knitr,
     pacman,
+    plotly,
     plyr,
     RColorBrewer (>= 1.1.2),
     rmarkdown,
+    scales,
     survival,
     survminer,
     testthat (>= 2.0.1)
@@ -77,4 +80,4 @@ VignetteBuilder:
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.1.9001

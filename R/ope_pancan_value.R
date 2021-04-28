@@ -1,4 +1,4 @@
-#' Obtain ToilHub Info for Single Gene
+#' Obtain ToilHub Info for Single Molecule
 #'
 #' @inheritParams get_pancan_value
 #' @importFrom utils data
@@ -6,11 +6,11 @@
 #' @export
 #'
 #' @examples
-#' \donttest{
-#' t <- ope_toil_gene()
+#' \dontrun{
+#' t <- query_toil_value_df()
 #' t
 #' }
-ope_toil_gene <- function(identifier = "TP53") {
+query_toil_value_df <- function(identifier = "TP53") {
   df <- get_pancan_gene_value(identifier = identifier)
   data("toil_info", package = "UCSCXenaShiny", envir = environment())
   toil_info <- toil_info %>%
@@ -32,7 +32,8 @@ ope_toil_gene <- function(identifier = "TP53") {
       "Primary Tumor", "Normal Tissue", "Primary Solid Tumor", "Solid Tissue Normal",
       "Metastatic", "Cell Line", "Primary Blood Derived Cancer - Peripheral Blood",
       "Primary Blood Derived Cancer - Bone Marrow", "Recurrent Blood Derived Cancer - Bone Marrow"
-    )) %>% # Only keep samples with count > 100
+    )) %>%
+    # Only keep samples with count > 100
     dplyr::mutate(
       sample_type = factor(sample_type, levels = c(
         "Primary Tumor", "Normal Tissue", "Primary Solid Tumor", "Solid Tissue Normal",
